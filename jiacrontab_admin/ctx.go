@@ -15,7 +15,7 @@ import (
 
 	"github.com/iwannay/log"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/kataras/iris/v12"
 )
 

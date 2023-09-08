@@ -11,7 +11,7 @@ import (
 
 	"fmt"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/iris-contrib/middleware/cors"
 	jwtmiddleware "github.com/iris-contrib/middleware/jwt"
 	"github.com/kataras/iris/v12/context"
@@ -23,16 +23,16 @@ func newApp(adm *Admin) *iris.Application {
 	app.UseGlobal(newRecover(adm))
 	app.Logger().SetLevel(adm.getOpts().App.LogLevel)
 	app.Use(logger.New())
-	app.HandleDir("/", AssetFile(), iris.DirOptions{
-		IndexName: "index.html",
-		Cache: iris.DirCacheOptions{
-			Enable:          true,
-			CompressIgnore:  iris.MatchImagesAssets,
-			Encodings:       []string{"gzip", "deflate", "br", "snappy"},
-			CompressMinSize: 50,
-			Verbose:         1,
-		},
-	})
+	// app.HandleDir("/", AssetFile(), iris.DirOptions{
+	// 	IndexName: "index.html",
+	// 	Cache: iris.DirCacheOptions{
+	// 		Enable:          true,
+	// 		CompressIgnore:  iris.MatchImagesAssets,
+	// 		Encodings:       []string{"gzip", "deflate", "br", "snappy"},
+	// 		CompressMinSize: 50,
+	// 		Verbose:         1,
+	// 	},
+	// })
 	// app.StaticEmbeddedGzip("/", "./assets/", GzipAsset, GzipAssetNames)
 	cfg := adm.getOpts()
 
