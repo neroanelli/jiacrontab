@@ -449,6 +449,7 @@ func (j *JobEntry) exec() {
 		} else {
 			err = models.DB().Take(&j.detail, "id=? and status in(?)",
 				j.job.ID, []models.JobStatus{models.StatusJobTiming, models.StatusJobRunning}).Error
+			atomic.StoreInt32(&j.processNum, int32(j.detail.ProcessNum))
 		}
 
 		if err != nil {
@@ -482,6 +483,10 @@ func (j *JobEntry) exec() {
 			j.jd.addJob(j.job, true)
 		}
 
+		if atomic.LoadInt32(&j.processNum) < 0 {
+			atomic.StoreInt32(&j.processNum, 0)
+		}
+
 		if atomic.LoadInt32(&j.processNum) >= int32(j.detail.MaxConcurrent) && j.detail.MaxConcurrent != 0 {
 			j.logContent = []byte("不得超过job最大并发数量\n")
 			return
@@ -498,7 +503,9 @@ func (j *JobEntry) exec() {
 		var endTime time.Time
 		defer func() {
 			endTime = time.Now()
-			atomic.AddInt32(&j.processNum, -1)
+			if atomic.LoadInt32(&j.processNum) > 0 {
+				atomic.AddInt32(&j.processNum, -1)
+			}
 			j.updateJob(models.StatusJobTiming, startTime, endTime, err)
 		}()
 
@@ -531,6 +538,12 @@ func (j *JobEntry) exec() {
 			if err = p.exec(); err == nil || j.once {
 				break
 			}
+
+    		// 如果不是最后一次重试，则等待 5 秒
+    		if i < j.detail.RetryNum {
+    		    log.Debug("Waiting 5 seconds before retry, jobID:", j.detail.ID)
+    		    time.Sleep(5 * time.Second)
+    		}
 		}
 	}
 
